@@ -346,16 +346,16 @@
 \definecolor{darkblue}{rgb}{0,0,0.5}
 \definecolor{darkgreen}{rgb}{0,0.5,0}
 
-\lstdefinelanguage{Haskell}{
-    extendedchars=\true,
-    tabsize=4,
-    keywordstyle=\color{darkblue},
-    commentstyle=\color{gray},
-    stringstyle=\color{darkgreen},
-    breaklines=true,
-    showstringspaces=false,
-    basicstyle=\small
-}
+% \lstdefinelanguage{Java}{
+%     extendedchars=\true,
+%     tabsize=4,
+%     keywordstyle=\color{darkblue},
+%     commentstyle=\color{gray},
+%     stringstyle=\color{darkgreen},
+%     breaklines=true,
+%     showstringspaces=false,
+%     basicstyle=\small
+% }
 
 \lstdefinelanguage{none}{
   identifierstyle=
