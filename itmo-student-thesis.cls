@@ -121,6 +121,7 @@
 
 \newcommand*{\@tablecontinuation}[1]{Table~#1, continued}
 \newcommand*{\@chaptername}{CHAPTER}
+\newcommand*{\@definitionsname}{DEFINITIONS}
 \newcommand*{\@introductionname}{INTRODUCTION}
 \newcommand*{\@conclusionname}{CONCLUSION}
 \newcommand*{\@appendixname}{APPENDIX}
@@ -150,6 +151,7 @@
 \renewcommand*{\theenumi}{\alph{enumi}}%
 \renewcommand*{\@tablecontinuation}[1]{Table~#1, continued}%
 \renewcommand*{\@chaptername}{CHAPTER}%
+\renewcommand*{\@definitionsname}{DEFINITIONS}%
 \renewcommand*{\@introductionname}{INTRODUCTION}%
 \renewcommand*{\@conclusionname}{CONCLUSION}%
 \renewcommand*{\@appendixname}{APPENDIX}%
@@ -179,6 +181,7 @@
 \renewcommand*{\theenumi}{\asbukx{enumi}}%
 \renewcommand*{\@tablecontinuation}[1]{Продолжение таблицы~#1}%
 \renewcommand*{\@chaptername}{ГЛАВА}%
+\renewcommand*{\@definitionsname}{СПИСОК ТЕРМИНОВ}%
 \renewcommand*{\@introductionname}{ВВЕДЕНИЕ}%
 \renewcommand*{\@conclusionname}{ЗАКЛЮЧЕНИЕ}%
 \renewcommand*{\@appendixname}{ПРИЛОЖЕНИЕ}%
@@ -343,8 +346,7 @@
 \definecolor{darkblue}{rgb}{0,0,0.5}
 \definecolor{darkgreen}{rgb}{0,0.5,0}
 
-\lstset{
-    language=Java,
+\lstdefinelanguage{Haskell}{
     extendedchars=\true,
     tabsize=4,
     keywordstyle=\color{darkblue},
@@ -353,6 +355,10 @@
     breaklines=true,
     showstringspaces=false,
     basicstyle=\small
+}
+
+\lstdefinelanguage{none}{
+  identifierstyle=
 }
 
 %% Все флоаты нумеруем глобально. Формулы - тоже.
@@ -618,8 +624,12 @@
 \newcommand{\startappendices}{\appendix}
 \newcommand{\initializefrontsections}{}
 
-%% ...отдельным пунктом - введение и заключение
+%% ...отдельным пунктом - введение, заключение и список термином
 
+\newcommand{\makedefinition}[3][]{\textbf{#2}\ifthenelse{\equal{#1}{}}{}{~(#1)}~--- #3.}
+\newcommand{\startdefinitionspage}{%
+\chapter*{\@definitionsname}\label{chapter:definitions}%
+\addcontentsline{toc}{chapter}{\@definitionsname}}
 \newcommand{\startprefacepage}{%
 \chapter*{\@introductionname}\label{chapter:introduction}%
 \addcontentsline{toc}{chapter}{\@introductionname}}
