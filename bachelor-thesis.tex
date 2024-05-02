@@ -16,9 +16,8 @@
 %% Один из пакетов, позволяющий делать таблицы на всю ширину текста.
 \usepackage{tabularx}
 
-% \lstloadlanguages{Haskell}
-
-\lstdefinelanguage{Haskell}{}
+%% Указывает число последних букв слова, которое можно перенести на новую строку 
+\righthyphenmin=2
 
 %% Делает кавычки в листингах прямыми.
 \usepackage{fontspec}
@@ -27,6 +26,14 @@
 %% Добавляет абзацные отсупы для параграфов в списках кроме первого параграфа
 \usepackage{enumitem}
 \setlist{listparindent=\parindent, nosep}
+
+\lstset{
+    columns=fullflexible,
+    basicstyle=\ttfamily\small,
+    gobble=2,
+    tabsize=2,
+    keywordstyle=,
+}
 
 %% Указываем файл с библиографией.
 \addbibresource{bachelor-thesis.bib}
@@ -83,8 +90,7 @@
 
     \item \makedefinition[англ. \textit{recogniser}]{Рекогнайзер}{программа, определяющая, принадлежит ли строка формальному языку}
 
-    \item \makedefinition{Семантика языка}{это смысловое значение конструкций языка. (функция, сопоставляющую строку, 
-        принадлежащую языку, некоторому значению)}
+    \item \makedefinition{Семантика языка}{это смысловое значение конструкций языка}
         
     \item \makedefinition[ввод]{Входной поток}{линейная последовательность токенов, которая передаётся парсеру для разбора}
     
@@ -445,7 +451,7 @@ $O(n^3)$. К сожалению, в оригинальный работе при
 
 Теперь, чтобы получить результат вычислений, например, для треугольника с катетами 3 и 4, можно вызвать \lstinline[language=Haskell]{pythagoras_cps 3 4 id}.
 
-\section{Монада Cont}\label{sec:cps_monad}
+\subsection{Монада Cont}\label{sec:cps_monad}
 
 Пусть мы хотим последовательно соединить два
 отложенных вычисления \lstinline[language=Haskell]{(a -> r) -> r} и \lstinline[language=Haskell]{(b -> r) -> r}. 
@@ -481,7 +487,7 @@ $O(n^3)$. К сожалению, в оригинальный работе при
                     \x -> runCont (f x) c
 \end{lstlisting}
 
-\section{Полиморфизм по результату}\label{sec:poly_cont_monad}
+\subsection{Полиморфизм по результату}\label{sec:poly_cont_monad}
 
 Недостаток Cont монады с листинга \ref{lst:cont_type} заключается в том, что тип результата (то есть
 \lstinline{r}) должен оставаться  неизменным внутри монады. Это означает, что при \lstinline{bind} нельзя изменить
@@ -502,7 +508,7 @@ $O(n^3)$. К сожалению, в оригинальный работе при
                     \x -> runCont (f x) c
 \end{lstlisting}
 
-\section{Продолжения с состоянием}\label{sec:stateful_cont}
+\subsection{Продолжения с состоянием}\label{sec:stateful_cont}
 
 Для написания мемоизированного парсера в стиле CPS необходимо, чтобы отложенные вычисления использовали таблицу мемоизации. 
 Такая таблица мемоизации является по сути изменяемым состоянием. Для его реализации можно воспользоваться State монадой.
@@ -518,7 +524,7 @@ $O(n^3)$. К сожалению, в оригинальный работе при
 Теперь продолжения имеют тип \lstinline{a -> State MemoTable r} и могут использовать таблицу мемоизации для вычисления результата.
 Класс Monad для нового типа продолжений определяется так же, как на листинге \ref{lst:poly_cont_monad}.
 
-\section{Недетерминированный Cont}\label{sec:contt_transformer}
+\subsection{Недетерминированный Cont}\label{sec:contt_transformer}
 
 В результате работы парсера может получится несколько результатов или вовсе ни одного, что свидетельствует о том, что 
 разбираемая строка не принадлежит языку. Поэтому отложенные вычисления в \lstinline{Cont} монаде должны возвращать не 
@@ -556,8 +562,8 @@ $O(n^3)$. К сожалению, в оригинальный работе при
 закончился неудачно, или \lstinline{Just (r, s)}, если разбор завершился успехом. Заметим, что такой парсер не может вернуть 
 несколько результатов разбора. Побробнее с этим можно ознакомится в рамках работы \cite{hutton_monadic_nodate}.
 
-\begin{lstlisting}[language=Haskell,float=!h,caption={Недетерминированный Cont с состоянием},label={lst:maybe}]
-    data Maybe a = Just a | Nothing
+\begin{lstlisting}[language=Haskell,float=!h,caption={Тип Maybe в Haskell},label={lst:maybe}]
+  data Maybe a = Just a | Nothing
 \end{lstlisting}
 
 Такая независимость парсера от "контейнера" для результата наводит на мысль написать обобщённый тип парсера,
@@ -566,25 +572,332 @@ $O(n^3)$. К сожалению, в оригинальный работе при
 \lstinline{m} принадлежит в классу монад тип \lstinline{StateT} также принадлежит к классу монад. 
 
 \begin{lstlisting}[language=Haskell,float=!h,caption={StateT трансформер монад},label={lst:stetet}]
-    newtype StateT s m a = StateT (s -> m (a, s))
+  newtype StateT s m a = StateT (s -> m (a, s))
 \end{lstlisting}
 
 Получается, что любой парсер монадический парсер с типом ввода \lstinline{s} и типом результата \lstinline{r} можно
 записать, как \lstinline{StateT s m r}, где \lstinline{m} --- это некоторый тип принадлежащий классу монад. Как можно 
 было заметить на примере со списком (\lstinline{[]}) и \lstinline{Maybe}, тип \lstinline{m} определяет свойства парсера. 
 Так получилось, что тип Cont из секции \ref{sec:contt_transformer} является монадой, а значит значения с типом
-\lstinline{StateT s Cont r} являются монадическими парсерами. Такие монадические парсеры мы будем называть \textbf{парсеры
+\textbf{\lstinline{StateT s Cont r}} являются монадическими парсерами. Такие монадические парсеры мы будем называть \textbf{парсеры
 в стиле CPS}. Введём для них тип с именем Parser, как на листинге \ref{lst:cps_parser}. Тип результата
 \lstinline{r} опущен, чтобы kind полученного типа был \lstinline{* -> *} и \lstinline{Parser} принадлежал к
 классу монад (в Haskell частично параметризованные алиасы для типов не поддерживаются).
 
 \begin{lstlisting}[language=Haskell,float=!h,caption={Парсер в CPS стиле},label={lst:cps_parser}]
-    type Parser s = StateT s Cont
+  type Parser s = StateT s Cont
+\end{lstlisting}
+
+\subsection{Мемоизированные парсеры в CPS стиле}\label{sec:memoized_cps_parser}
+
+Работа, проделанная в предыдущих разделах была необходима для того, чтобы мемоизировать парсеры так, чтобы они поддерживали
+левую рекурсию. 
+
+Проблема с комбинаторными парсерами, написанными леворекурсивно, заключается в том, что такие парсеры вызывают самих
+себя, при этом не меняя состояние разбора. В связи этим первый леворекурсивный вызов приводит к самому себе, тот снова
+приводит к самом себе и так далее, в итоге код зацикливается, пока не переполнится стэк вызовов.
+
+Чтобы избежать подобного исхода можно сделать следующее в случае леворекурсивного вызова:
+\begin{enumerate}
+    \item Не производить леворекурсивный вызов, при этом сохранив парсер, который должен быть вызван после него.
+    \item Когда у нетерминала, который привёл к леворекурсивному вызову, появляется новый результат, вызвать сохранённый парсер
+          на результате.
+\end{enumerate}
+Заметим, что если при вызове сохранённого парсера у леворекурсивного нетерминала появляется новый результат, то надо
+снова вызвать сохранённый парсер на этом результате. 
+
+\begin{figure}[!h]
+  \caption{Леворекурсивная грамматика}\label{leftrec_grammar_cps}
+  \[
+      \begin{array}{lll}
+          A & \to & Aa \\
+            &     & b
+      \end{array}
+  \]
+\end{figure}
+
+Рассмотрим грамматику на рисунке \ref{leftrec_grammar_cps}. Парсер для этой грамматики принимает строки вида
+$ba^*$. Если придерживаться описанного алгоритма, то парсер для нетерминала
+$A$ на строке \lstinline{"baa"} сначала попытается вызвать самого себя. При этом код должен понять, что
+произошёл леворекурсивный вызов и не вызывать парсер, а вместо этого сохранить то, что должно распарситься после вызова
+\lstinline{A}, то есть парсер для терминала $a$. Потом парсер для нетерминала
+\lstinline{A} попытается вызвать парсер для нетерминала \lstinline{b}, этот парсер вернёт результат
+\lstinline{("b", "aa")}. Получается, что у нетерминала $A$ появился новый результат, значит, на этом
+результате нужно солгасно алгоритму вызвать сохранённый парсер, то есть парсер для терминала $a$, который вернёт
+результат \lstinline{("ba", "a")}. У нетерминала $A$ появился новый результат, значит, на нём снова
+нужно вызвать парсер для $a$, который вернёт результат \lstinline{("baa", "")}. Таким образом парсер,
+следуя описанному ранее алгоритму, смог разобрать всю входную строку, несмотря на левую рекурсию.
+
+\subsection{Алгоритм CPS парсеров}
+
+Ещё раз опишем тот же самый алгоритм теперь уже без упора на левую рекурсию.
+\begin{enumerate}
+    \item Для каждого парсера нетерминала храним список его результатов и список его продолжений.
+    \item При появлении у парсера нового продолжения вызываем его на всех результатах.
+    \item При появлении у парсера нового результата вызываем на нём все продолжения.
+\end{enumerate}
+
+Важно заметить, что подобный алгоритм не только позволяет записывать парсеры леворекурсивно, но и гарантирует
+полиномиальное время работы парсера. Чтобы убедиться в этом, обратимся к источникам. В статье, где впервые был предложен подобный алгоритм для CPS
+рекогнайзеров\cite{johnson_memoization_nodate}, утверждается, что он работает  за полиномиальное время. Алгоритм для парсеров
+производит те же самые шаги, что и алгоритм для рекогнайзеров, следовательно,  должен также работать за полиномиальное
+время. Кроме того в статье, где была разработана другая библиотека CPS парсеров\cite{johnson_memoization_nodate},  доказывается,
+что парсеры в CPS работают за полином, притом для не сильно неоднозначных грамматик это время ограничено
+$O(n^3)$. Наконец, нужно сказать, что представленный алгоритм является частным случаем мемоизированных
+парсеров. В статье \cite{norvig_techniques_1991} доказывается, что свойства мемоизированных парсеров аналогичны свойствам
+парсеров Эрли.
+
+\subsection{Реализация алгоритма CPS парсеров}
+
+На листингах \ref{lst:cps_types} и \ref{lst:cps_memoization} представлен основной код, необходимый для работы мемоизированных CPS парсеров. Напомним,
+что тип \lstinline{Cont} принадлежит классу монад, как это было показано ранее.
+
+Два типа \lstinline{MemoEntry} и \lstinline{MemoTable} с листинга \ref{lst:cps_types} используются для мемоизации. Тип \lstinline{MemoTable} --- это
+тип таблицы мемоизации, из этой таблицы по ключу, который уникально идентифицирует парсер, а также вводу можно получить
+значение типа \lstinline{MemoEntry}. \lstinline{MemoEntry} хранит результаты применения парсера с ключом к некоторому вводу, а
+также продолжения этого парсера на этом вводе. \lstinline{MemoTable} используется в качестве состояния для Cont. Для
+удобства также введён тип \lstinline{ContState}, который является типом результата мемоизированного продолжения.
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Типы для CPS парсера},label={lst:cps_types}]
+  data MemoEntry k s a r = MemoEntry
+  { results :: [(a, s)],
+    continuations :: [(a, s) -> ContState k s [r]]
+  }
+
+  type MemoTable k s =
+    Map.HashMap
+      k
+      (Map.HashMap s (MemoEntry k s Dynamic Dynamic))
+
+  type ContState k s = State (MemoTable k s)
+
+  newtype Cont k s a = Cont
+    { runCont ::
+        forall r.
+        (Typeable r) =>
+        (a -> ContState k s [r]) ->
+        ContState k s [r]
+    }
+
+  type BaseParser k s = StateT s (Cont k s)
+\end{lstlisting}
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Мемоизация для CPS парсера},label={lst:cps_memoization}]
+  baseMemo ::
+    (Typeable a, Hashable k, Hashable s, Eq k, Eq s) =>
+    k -> BaseParser k s a -> BaseParser k s a
+  baseMemo key parser = StateT $ \state ->
+    Cont $ \continuation ->
+      do
+        modify (Map.insertWith (\_ old -> old) key Map.empty)
+        entry <- gets $
+          \table -> Map.lookup state $ table Map.! key
+        case entry of
+          Nothing -> do
+            modify $
+              addNewEntry state $
+                MemoEntry [] [toDynamicContinuation continuation]
+            runCont
+              (runStateT parser state)
+              ( \result -> do
+                  modify (addResult state result)
+                  conts <- gets $ \table ->
+                    continuations $ (table Map.! key) Map.! state
+                  join <$> mapM
+                    ( \cont ->
+                        fmap fromDynamic <$> cont (first toDyn result)
+                    )
+                    conts
+              )
+          Just foundEntry -> do
+            modify (addContinuation state continuation)
+            join <$> mapM
+              (continuation . first fromDynamic)
+              (results foundEntry)
+\end{lstlisting}
+
+На листинге \ref{lst:cps_memoization} определена функция \lstinline{baseMemo}, которая делает из обычного парсера мемоизированный. Она принимает уникальный ключ
+и парсер  для мемоизации. Когда мемоизированный парсер вызывается впервые, в таблице мемоизации по ключу для  этого парсера создаётся
+пустой словарь, это просходит в строке \lstinline{modify (Map.insertWith (\_ old -> old) key Map.empty)}. Далее проверяется, есть ли в этом словаре запись для 
+вводу, на котором был вызван парсер.
+
+Если такой записи нет, то она создаётся в строке \lstinline{modify (addNewEntry state (MemoEntry [] [toDynamicContinuation continuation]))}, в неё сразу же помещается продолжение, с
+которым был вызван мемоизированный парсер. Далее вызывается сам парсер с особым продолжением. Это продолжение
+по завершении парсера с некоторым результатом сохраняет этот результат в \lstinline{MemoEntry}, а также вызывает все
+сохранённые продолжения парсера на полученном результате и возвращает их ответы, соединённые в единый список.
+
+Если запись в таблице мемоизации по ключу парсера и вводу есть, то в неё добавляется переданное в парсер продолжение, это происходит в строке
+\lstinline{modify (addContinuation state continuation)}. Далее это продолжение вызывается на всех сохранённых результатах парсера.
+
+Можно заметить, что сам мемоизированный парсер для заданного ввода вызывается единожды, далее используются его
+сохранённые результаты, этим и объясняется полиномиальное время работы алгоритма.
+
+\subsection{Пример использования CPS парсера}\label{sec:memoized_cps_parser}
+
+Приведём пример использования написанного парсера. Сделаем это на примере грамматики с рисунка \ref{leftrec_grammar_cps}.
+Для этого сначала введём примитивный парсер, который разбирает переданную в него строку. Его можно найти на листинге
+\ref{lst:string_parser}. Функция stripPrefix импортирована из модуля Data.List стандартной библиотеки Haskell. Для
+наглядности в качестве потока ввода в парсере используется String,  это далеко не самое удачное решение с точки зрения
+производительности, позже это будет исправлено.
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Парсер для строки},label={lst:string_parser}]
+  string :: String -> BaseParser k String String
+  string s =
+    StateT
+      ( \state ->
+          case stripPrefix s state of
+            Just s' -> return (s, s')
+            Nothing -> empty
+      )
+\end{lstlisting}
+
+Теперь можно написать парсер для грамматики с рисунка \ref{leftrec_grammar_cps}. Он представлен на листинге
+\ref{lst:baa_parser}.	В качестве ключа для парсера используется целое число $1$. Ввиду того, что
+парсер единственный, ключ может быть любым. Главное, чтобы тип ключа поддерживал проверку на равенство, а также поиска
+хэша за $O(1)$. Для написания парсера \lstinline{baa} использован тот факт, что любая монада
+является также функтором и апликативом. Это значит, что для парсеров определены операторы
+\lstinline{<$>} и \lstinline{<*>}.
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Парсер для строк $ba^*$},label={lst:baa_parser}]
+  baa :: BaseParser Int String String
+  baa =
+    baseMemo 1 $
+      (++) <$> baa <*> chunk "a"
+        <|> chunk "b"
+\end{lstlisting}
+
+\section{Генерация ключей мемоизации}\label{sec:memoization_keys}
+
+\subsection{Парсеры первого порядка}
+
+Расставлять ключи мемоизации вручную неудобно. Более того, при таком подходе сложно обеспечить уникальность ключей. Поэтому
+необходимо предоставить средства для автоматической генерации ключей мемоизации. Для этого добавим новый тип с листинга \lstinline{Key} 
+с листинга \ref{lst:memoz_key_type}. \lstinline{Key} позволяет сравнивать значения разных типов. 
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Тип ключей мемоизации},label={lst:memoz_key_type}]
+  data Key = forall a. (Typeable a, Hashable a, Eq a) => Key a
+
+  instance Eq Key where
+      (==) :: Key -> Key -> Bool
+      (==) (Key a) (Key b) =
+          case cast b of
+              Just x -> a == x
+              Nothing -> False
+
+  instance Hashable Key where
+      hashWithSalt :: Int -> Key -> Int
+      hashWithSalt s (Key a) = hashWithSalt s a
+\end{lstlisting}
+
+Теперь введём метод \lstinline{makeStableKey a}, который генерирует ключ на основе \lstinline{StableName}\cite{noauthor_systemmemstablename_nodate} 
+своего аргумента. Для аргументов с одинаковыми адресами в памяти функция \lstinline{makeStableKey} возвращает равные ключи,
+при этом функция также может вернуть равные ключи для равных аргументов, даже если у этих аргументов разные адреса в
+памяти. Так происходит из-за оптимизаций компилятора, это не мешает использованию \lstinline{makeStableKey} по назначению.
+Предполагается, что функция makeStableKey будет вызываться с функциями-парсерами в качестве аргумента, чтобы
+сгенерировать ключ для этого парсера, как это сделано на листинге \ref{lst:makeStableKey_example}.
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Пример использования makeStableKey},label={lst:makeStableKey_example}]
+  baa :: BaseParser Key String String
+  baa =
+    baseMemo (makeStableKey baa) $
+      (++) <$> baa <*> chunk "a"
+        <|> chunk "b"
+\end{lstlisting}
+
+Теперь можно ввести функцию \lstinline{memo}, которая будет автоматически генерировать ключи. Закодируем парсер для baa c её
+помощью как на листинге \ref{lst:memo}.
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Memo с автоматическим ключом},label={lst:memo}]
+  memo :: 
+    (Typeable s, Typeable a, Hashable s, Eq s) => 
+    Parser s a -> Parser s a
+  memo p = baseMemo (makeStableKey p) (parser p)
+
+  baa :: BaseParser Key String String
+  baa =
+    memo $
+      (++) <$> baa <*> chunk "a"
+        <|> chunk "b"
+\end{lstlisting}
+
+\subsection{Парсеры высшего порядка}
+
+Функция \lstinline{memo} отлично работает для парсеров высшего порядка, однако её невозможно использовать с
+парсерами высшего порядка. Для примера представим, что необходимо мемоизировать парсер
+\lstinline{count p n} с листинга \ref{lst:count_parser}, который  принимает два аргумента: парсер и число раз,
+которое этот парсер необходимо последовательно применить к вводу. Чтобы мемоизировать этот парсер, в качестве ключа
+можно было бы использовать что-то похожее на \lstinline{Key (makeStableKey count, makeStableKey p, n)}, то есть тройку из
+адреса самого парсера \lstinline{count}, адреса его аргумента \lstinline{p} и числа n. Так как все три элемента тройки поддерживают
+операцию равенста и хэширования, то и тройка тоже её поддерживает, притом за $O(1)$. Мемоизированная версия \lstinline{count} называется \lstinline{mCount}
+на листинге \ref{lst:count_parser}.
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Парсер высшего порядка count},label={lst:count_parser}]
+  count :: 
+    BaseParser Key String String -> 
+    Int -> 
+    BaseParser Key String String
+  count p n = join <$> replicateM n p
+
+  mCount :: 
+    BaseParser Key String String -> 
+    Int -> 
+    BaseParser Key String String
+  mCount p n = baseMemo 
+    (Key (makeStableKey mCount, makeStableKey p, n)) $ 
+      join <$> replicateM n p
+\end{lstlisting}
+
+Тем не менее в таком подходе есть проблема. Предположим, что написан парсер \lstinline{joinedCount n = mCount (mCount (string "a") 3) n}.
+Такой пример кажется несколько надуманным, однако суть его в том, что в \lstinline{mCount} подставляется парсер высшего порядка.
+Теперь для первого аргумента внешнего \lstinline{mCount} неправильным будет вызывать \lstinline{makeStableKey (mCount (string "a") 3)}, потому что
+этот вызов каждый раз будет возвращать новый ключ, для одинаковых парсеров, ведь \lstinline{mCount (string "a") 3} создаётся заново при каждом вызове
+(если не вмешаются оптимизации компилятора, на которые в общем случае рассчитывать нельзя).
+
+Чтобы избежать такой ситуации необходимо в парсере \lstinline{mCount} для мемоизации вместо вместо \lstinline{makeStableKey p}
+использовать ключ парсера \lstinline{p}. Для этого в каждом парсере необходимо хранить его ключ. Введём новый тип парсера на листинге \ref{lst:memoized_parser_type}. 
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Тип парсера с ключом},label={lst:memoized_parser_type}]
+  data Parser s a = Parser
+    { key :: Key,
+      parser :: BaseParser Key s a
+    }
+\end{lstlisting}
+
+Очевидно, что тип \lstinline{Parser} принадлежит классу монад. При операциях \lstinline{fmap},
+\lstinline{pure}, \lstinline{<*>}, \lstinline{>>=}, \lstinline{<|>}, \lstinline{empty}, для созданного парсера
+случайным образом генерируется уникальный ключ при помощи \lstinline{Unique} из стандартной библиотеки Haskell. Для
+некоторых примитивных парсеров, таких как \lstinline{string} ключ генерируется на основе аргументов. То есть,
+например, все парсеры \lstinline{string} для одинаковых строк имеют одинаковые ключи.  Введём для удобства две новые
+функции, ответственные за мемоизацию: \lstinline{memo} и \lstinline{memoWithKey}. Теперь можно переопределить
+\lstinline{mCount}. Функции \lstinline{memo}, \lstinline{memoWithKey} и обновлённый \lstinline{mCount} представлены на
+листинге \ref{lst:mcount_fixed}. Для парсеров высшего порядка  всегда необходимо указывать ключи явно.
+
+\begin{lstlisting}[language=Haskell,float=!h,caption={Исправленный mCount},label={lst:mcount_fixed}]
+  memo :: 
+    (Typeable s, Typeable a, Hashable s, Eq s) => 
+    Parser s a -> Parser s a
+  memo p = Parser k (baseMemo k (parser p))
+    where
+    k = makeStableKey p
+
+  memoWithKey :: 
+    (Typeable s, Typeable t, Hashable s, Eq s) => 
+    Key -> Parser s t -> Parser s t
+  memoWithKey k p = Parser k (baseMemo k (parser p))
+
+  mCount :: 
+    Parser String String -> 
+    Int -> 
+    Parser String String
+  mCount p n = memoWithKey 
+    (Key (makeStableKey mCount, key p, n)) $ 
+      join <$> replicateM n p
 \end{lstlisting}
 
 \chapterconclusion
 
-В этой главе были проанализированы существующие решения.
+В этой главе были проанализированы существующие решения, потенциально способные решить задачу ВКР. Было выбрано наиболее
+удачное решение. На его основе был разработан алгоритм разбора и по алгоритму написан код.
 
 \chapter{ПОЛУЧЕННЫЕ РЕЗУЛЬТАТЫ}
 
