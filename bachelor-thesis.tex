@@ -16,6 +16,9 @@
 %% Один из пакетов, позволяющий делать таблицы на всю ширину текста.
 \usepackage{tabularx}
 
+%% Позволяет обединять строки таблицы
+\usepackage{multirow}
+
 %% Указывает число последних букв слова, которое можно перенести на новую строку 
 \righthyphenmin=2
 
@@ -1047,7 +1050,7 @@ backtracking. По графику <<Memo CPS>> видно, что разрабо
   \]
 \end{figure}
 
-Как показано в разделе \ref{sec:arith_expr} для арифметических выражений, чья грамматика записана в нелеворекурсивном
+Как показано в разделе \ref{sec:arith_expr}, для арифметических выражений, чья грамматика записана в нелеворекурсивном
 виде, можно не использовать мемоизацию, при этом асимптотика времени работы парсера не изменится. Однако это суждение верно не
 для любой грамматики. Как было замечено в разделе \ref{sec:cps_algorithm} алгоритм CPS парсеров гарантирует полиномиальное время
 работы парсера. Приведём пример, когда мемоизация даёт выигрыш даже для нелеворекурсиных парсеров. Рассмоторим
@@ -1081,46 +1084,59 @@ backtracking при разборе такой грамматики равно $O
     return $ a ++ b ++ c
 \end{lstlisting}
 
-\section{Сравнение свойств библиотеки с существующим интсрументами}\label{sec:comparison_table}
+\section{Сравнение свойств разработанной библиотеки с существующими интсрументами}\label{sec:comparison_table}
 
-На таблице \ref{tab:comparison} представлен анализ некоторых элементах синтаксического анализа, которые существуют на данный момент.
-Иструменты выбирались либо на основе их популярности, либо потому что они обладают уникальными свойствами. 
-Важно заметить, что ни один из существующих комбинаторных парсеров не поддерживает левую рекурсию, пользовательскую семантику 
-и при этом способен разбирать любую контекстно-свободную грамматику.
+В таблице \ref{tab:comparison} представлено сравнительнение свойств некоторых инструментов синтаксического анализа,
+которые существуют на данный момент. Выбранные для сравнения иструменты либо популярны, либо обладают уникальными
+свойствами. Важно заметить, что ни один из существующих комбинаторных парсеров не поддерживает левую рекурсию,
+пользовательскую семантику и при этом способен разбирать любую контекстно-свободную грамматику. Библиотека, написанная в 
+рамках ВКР, называется в таблице <<\textit{CPS}>>.
 
-Проблема таких инструментов как ANTLR и Bison заключается в том, что они являются генераторами парсеров, а не комбинаторами.
-Почему это является проблемой было объяснено в секции \ref{sec:parser_combinators_advantages}. 
+Проблема таких инструментов как ANTLR и Bison заключается в том, что они являются генераторами, а не комбинаторами парсеров.
+Это приводит к проблемам, описанным в секции \ref{sec:parser_combinators_advantages}. 
 
 Проблема Parsley\cite{willis_staged_2020} и подобных инструментов заключается во-первых в меньшей выразительной мощи в
 сравнении с монадическими инструментами анализа, а во вторых в отcутствии поддержки левой рекурсии.
-Интруметы типа PyParsing используют алгоритм Packrat\cite{ford_parsing_nodate}, что позволяет им разбирать лишь PEG, что
-делает невозможным композировать парсеры.
+Интруметы типа PyParsing используют алгоритм Packrat\cite{ford_parsing_nodate}, который подходит для разбора PEG, что
+делает невозможным в общем случае комбинировать парсеры, написанные с использование Packrat.
 Существующие монадические комбинаторные парсеры типа MegaParsec используют backtracking только в случае, когда это явно
 указано пользователем. Вместе с тем backtracking без мемоизаиции приводит к экспоненциальному времени разбора на некоторых КСГ, 
 что было показано в секции \ref{sec:current_parser_combinators_problems}.
 
 Важно рассмотреть библиотеку Meerkat\cite{johnson_memoization_nodate}. В её основе лежит тот же алгоритм, который используется для
 библиотеки, написанной	в рамках ВКР. Тем не менее Meerkat оптимизирован для разбора неоднозначных грамматик, в связи с
-этим парсинг с использованием Meerkat возвращает SPPF (shared packed parse forest), что не позволяет пользователю
+этим результатом разбора с использованием Meerkat служит SPPF (shared packed parse forest), что не позволяет пользователю
 задавать свою семантику для разбора.
 
 \begin{table}[!h]
   \caption{Сравнительный анализ некоторых инструментов синтаксического анализа}\label{tab:comparison}
   \centering
-  \begin{tabular}{|c|cc|ccccc|}
+  \begin{tabular}{|c|cc|c|c}
     \hline
-                                                                          & \multicolumn{1}{c|}{ANTLR}     & Bison                           & \multicolumn{1}{c|}{Parsley} & \multicolumn{1}{c|}{PyParsing} & \multicolumn{1}{c|}{MegaParsec}   & \multicolumn{1}{c|}{Meerkat} & CPS   \\ \hline
-    Тип                                                                   & \multicolumn{2}{c|}{генератор} & \multicolumn{5}{c|}{комбинатор}                                                                                                                                                                    \\ \hline
-    Вид                                                                   & \multicolumn{2}{c|}{}          & \multicolumn{1}{c|}{апликатив}  & \multicolumn{4}{c|}{монада}                                                                                                                                      \\ \hline
-    Класс грамматик                                                       & \multicolumn{1}{c|}{LL(*)}     & КСГ                             & \multicolumn{1}{c|}{КСГ}     & \multicolumn{1}{c|}{PEG}       & \multicolumn{3}{c|}{КСГ}                                                                         \\ \hline
-    Время работы                                                          & \multicolumn{1}{c|}{O(n)}      & O(n³)                           & \multicolumn{1}{c|}{O(n³)}   & \multicolumn{1}{c|}{O(n)}      & \multicolumn{1}{c|}{O(n) – O(eⁿ)} & \multicolumn{1}{c|}{O(n³)}   & O(n³) \\ \hline
-    Лев. рекурсия                                                         & \multicolumn{1}{c|}{Нет}       & Да                              & \multicolumn{1}{c|}{Нет}     & \multicolumn{1}{c|}{Нет}       & \multicolumn{1}{c|}{Нет}          & \multicolumn{1}{c|}{Да}      & Да    \\ \hline
-    \begin{tabular}[c]{@{}c@{}}Пользовательская\\  семантика\end{tabular} & \multicolumn{1}{c|}{Да}        & Да                              & \multicolumn{1}{c|}{Да}      & \multicolumn{1}{c|}{Да}        & \multicolumn{1}{c|}{Да}           & \multicolumn{1}{c|}{Нет}     & Да    \\ \hline
+                                                                          & \multicolumn{1}{c|}{ANTLR} & Bison & Parsley    & \multirow{7}{*}{\dots} \\ \cline{1-4}
+    Тип                                                                   & \multicolumn{2}{c|}{генератор}     & комбинатор &                      \\ \cline{1-4}
+    Вид                                                                   & \multicolumn{2}{c|}{}              & апликатив  &                      \\ \cline{1-4}
+    Класс грамматик                                                       & \multicolumn{1}{c|}{LL(*)} & КСГ   & КСГ        &                      \\ \cline{1-4}
+    Время работы                                                          & \multicolumn{1}{c|}{O(n)}  & O(n³) & O(n³)      &                      \\ \cline{1-4}
+    Лев. рекурсия                                                         & \multicolumn{1}{c|}{Нет}   & Да    & Нет        &                      \\ \cline{1-4}
+    \begin{tabular}[c]{@{}c@{}}Пользовательская\\  семантика\end{tabular} & \multicolumn{1}{c|}{Да}    & Да    & Да         &                      \\ \hline
+  \end{tabular}
+
+  \bigskip
+
+  \begin{tabular}{l|cccc|}
+    \hline
+                            & \multicolumn{1}{c|}{PyParsing}  & \multicolumn{1}{c|}{MegaParsec}   & \multicolumn{1}{c|}{Meerkat} & \textit{CPS} \\ \cline{2-5}
+                            & \multicolumn{4}{c|}{комбинатор}                                                                                   \\ \cline{2-5}
+                            & \multicolumn{4}{c|}{монада}                                                                                       \\ \cline{2-5}
+                            & \multicolumn{1}{c|}{PEG}        & \multicolumn{3}{c|}{КСГ}                                                        \\ \cline{2-5}
+                            & \multicolumn{1}{c|}{O(n)}       & \multicolumn{1}{c|}{O(n) – O(eⁿ)} & \multicolumn{1}{c|}{O(n³)}   & O(n³)        \\ \cline{2-5}
+                            & \multicolumn{1}{c|}{Нет}        & \multicolumn{1}{c|}{Нет}          & \multicolumn{1}{c|}{Да}      & Да           \\ \cline{2-5}
+    \multirow{-7}{*}{\dots} & \multicolumn{1}{c|}{Да}         & \multicolumn{1}{c|}{Да}           & \multicolumn{1}{c|}{Нет}     & Да           \\ \hline
   \end{tabular}
 \end{table}
 
 % TODO дополнить информацию в библиографии
-% TODO найти способ сделать так, чтобы таблица умещалась на странице
 % TODO показать использование парсеров высшего порядка. А то как-то всё неубедительно выглядит
 % TODO дописать нормальное заключение
 
@@ -1132,3 +1148,16 @@ backtracking при разборе такой грамматики равно $O
 \printmainbibliography
 
 \end{document}
+
+% \begin{table}[]
+%   \begin{tabular}{|c|cc|ccccc|}
+%   \hline
+%                                                                         & \multicolumn{1}{c|}{ANTLR} & Bison & \multicolumn{1}{c|}{Parsley}   & \multicolumn{1}{c|}{PyParsing} & \multicolumn{1}{c|}{MegaParsec}   & \multicolumn{1}{c|}{Meerkat} & \cellcolor[HTML]{FFFFFF}\textbf{CPS}   \\ \hline
+%   Тип                                                                   & \multicolumn{2}{c|}{генератор}     & \multicolumn{5}{c|}{комбинатор}                                                                                                                                             \\ \hline
+%   Вид                                                                   & \multicolumn{2}{c|}{}              & \multicolumn{1}{c|}{апликатив} & \multicolumn{4}{c|}{монада}                                                                                                                \\ \hline
+%   Класс грамматик                                                       & \multicolumn{1}{c|}{LL(*)} & КСГ   & \multicolumn{1}{c|}{КСГ}       & \multicolumn{1}{c|}{PEG}       & \multicolumn{3}{c|}{КСГ}                                                                                  \\ \hline
+%   Время работы                                                          & \multicolumn{1}{c|}{O(n)}  & O(n³) & \multicolumn{1}{c|}{O(n³)}     & \multicolumn{1}{c|}{O(n)}      & \multicolumn{1}{c|}{O(n) – O(eⁿ)} & \multicolumn{1}{c|}{O(n³)}   & \cellcolor[HTML]{FFFFFF}\textbf{O(n³)} \\ \hline
+%   Лев. рекурсия                                                         & \multicolumn{1}{c|}{Нет}   & Да    & \multicolumn{1}{c|}{Нет}       & \multicolumn{1}{c|}{Нет}       & \multicolumn{1}{c|}{Нет}          & \multicolumn{1}{c|}{Да}      & \cellcolor[HTML]{FFFFFF}\textbf{Да}    \\ \hline
+%   \begin{tabular}[c]{@{}c@{}}Пользовательская\\  семантика\end{tabular} & \multicolumn{1}{c|}{Да}    & Да    & \multicolumn{1}{c|}{Да}        & \multicolumn{1}{c|}{Да}        & \multicolumn{1}{c|}{Да}           & \multicolumn{1}{c|}{Нет}     & \cellcolor[HTML]{FFFFFF}\textbf{Да}    \\ \hline
+%   \end{tabular}
+%   \end{table}
