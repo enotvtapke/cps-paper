@@ -522,7 +522,7 @@ $A \leftarrow b / ab$ вернуть \lstinline{"a"}, потому что пра
 Тогда тип \lstinline{Cont} необходимо изменить. Изменённый тип представлен на листинге \ref{lst:stateful_cont_type}.
 
 \begin{lstlisting}[language=Haskell,float=!h,caption={Тип Cont с состоянием},label={lst:stateful_cont_type}]
-    newtype Cont r a = Cont { 
+    newtype Cont a = Cont { 
         runCont :: forall r. (a -> State MemoTable r) 
             -> State MemoTable r 
         }
@@ -540,20 +540,20 @@ $A \leftarrow b / ab$ вернуть \lstinline{"a"}, потому что пра
 Важно заметить, что изменённый тип принадлжит классу Alternative.
 
 \begin{lstlisting}[language=Haskell,float=!h,caption={Недетерминированная монада продолжения с состоянием},label={lst:nondeterministic_cont_type}]
-    newtype Cont r a = Cont { 
+    newtype Cont a = Cont { 
         runCont :: forall r. (a -> State MemoTable [r]) 
             -> State MemoTable [r] 
         }
 
-    instance Alternative (Cont k s) where
-        empty :: Cont k s a
+    instance Alternative Cont where
+        empty :: Cont a
         empty = Cont (\_ -> return empty)
-        (<|>) :: Cont k s a -> Cont k s a -> Cont k s a
-        (<|>) a b =
+        (<|>) :: Cont a -> Cont a -> Cont a
+        (<|>) l r =
         Cont
             ( \k -> do
-                r1 <- runCont a k
-                r2 <- runCont b k
+                r1 <- runCont l k
+                r2 <- runCont r k
                 return $ r1 <|> r2
             )
 \end{lstlisting}
