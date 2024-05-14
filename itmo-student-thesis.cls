@@ -1154,8 +1154,8 @@
 \end{titlepage}}
 
 %%% Параметр: Бакалавр/Магистр
-\renewcommand{\maketitle}[1]{
-    \ifstrequal{#1}{Магистр}{
+\renewcommand{\maketitle}[2][]{
+    \ifstrequal{#2}{Магистр}{
         \providecommand{\thespecialization@ru}{Технологии разработки программного обеспечения}
         \providecommand{\thespecialty@ru}{01.04.02~Прикладная математика и информатика}
         \providecommand{\thespecialization@en}{Technologies of software engineering}
@@ -1163,7 +1163,7 @@
         \providecommand{\@strings@DegreeName@ru}{Магистр}
         \providecommand{\@strings@DegreeName@en}{Master}
     }{
-        \ifstrequal{#1}{Бакалавр}{
+        \ifstrequal{#2}{Бакалавр}{
             \providecommand{\thespecialization@ru}{Информатика и программирование}
             \providecommand{\thespecialty@ru}{01.03.02~Прикладная математика и информатика}
             \providecommand{\thespecialization@en}{Computer science and programming}
@@ -1171,12 +1171,15 @@
             \providecommand{\@strings@DegreeName@ru}{Бакалавр}
             \providecommand{\@strings@DegreeName@en}{Bachelor}
         }{
-            \ClassError{Unknown maketitle argument: #1, expected Магистр or Бакалавр}
+            \ClassError{Unknown maketitle argument: #2, expected Магистр or Бакалавр}
         }
     }
 
 	\pagenumbering{gobble}
-	\typeoutTitlePage
+	\ifstrequal{#1}{noTitle}{}{
+        \typeoutTitlePage
+        \if@shouldmaketitlepage@ru\begin{otherlanguage}{russian}\typeoutTitlePage\end{otherlanguage}\fi
+    }
     \if@shouldmaketitlepage@ru\begin{otherlanguage}{russian}\typeoutTitlePage\end{otherlanguage}\fi
     \if@shouldmakespecification\typeoutSpecification\fi
     \if@shouldmakespecification@ru\begin{otherlanguage}{russian}\typeoutSpecification\end{otherlanguage}\fi
