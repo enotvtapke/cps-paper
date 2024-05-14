@@ -1,7 +1,7 @@
-full = ../formal_thesis.pdf
+full = ../formal-thesis.pdf
 
 formal:
-	pdfunite title-page.pdf specification.pdf annotation.pdf ../bachelor-thesis.pdf formal_thesis.pdf
+	pdfunite title-page.pdf specification.pdf annotation.pdf ../bachelor-thesis.pdf formal-thesis.pdf
 
 clean:
 	rm -f full
